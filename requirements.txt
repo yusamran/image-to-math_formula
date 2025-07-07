@@ -1,5 +1,6 @@
 streamlit
 Pillow
+pix2tex
+python-docx
 torch
 torchvision
-python-docx
