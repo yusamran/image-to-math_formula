@@ -1,10 +1,12 @@
 import streamlit as st
 from PIL import Image
 from io import BytesIO
-
+import os
 from docx import Document
+# ✅ Tell torch to use your local writable path
+os.environ["TORCH_HOME"] = "./torch_cache"
 from pix2tex.cli import LatexOCR
-
+model = LatexOCR()
 # ----------------------------
 # App title & instructions
 # ----------------------------
