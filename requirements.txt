@@ -1,6 +1,5 @@
 streamlit
+Pillow
 torch
 torchvision
-Pillow
 python-docx
-git+https://github.com/lukas-blecher/LaTeX-OCR.git
