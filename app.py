@@ -8,9 +8,9 @@ import os
 from docx import Document
 
 # ----------------------------
-# Title + Instructions
+# App title & instructions
 # ----------------------------
-st.title("🧮 Free Image-to-LaTeX Converter")
+st.title("🧮 Free Image-to-LaTeX Converter (New Version)")
 st.write(
     "Upload an image of a math formula (PNG, JPG, JPEG, BMP, GIF, WEBP — "
     "any case) and get the recognized LaTeX code. "
@@ -18,8 +18,8 @@ st.write(
 )
 
 # ----------------------------
-# ✅ Safe file uploader — lowercased, no dot, no duplicate
-# Streamlit normalizes extensions internally, so this works for any case.
+# ✅ File uploader (case-insensitive, no dot, no duplicates)
+# Streamlit normalizes extensions.
 # ----------------------------
 uploaded_file = st.file_uploader(
     "Upload a formula image",
@@ -39,9 +39,10 @@ if uploaded_file:
             image.save(tmp.name)
             image_path = tmp.name
 
-        # ✅ Run LaTeX-OCR predict.py via subprocess
-        # Make sure you cloned LaTeX-OCR in your project folder!
-        command = f"python LaTeX-OCR/predict.py --img {image_path} --config LaTeX-OCR/config.yaml"
+        # ✅ Run LaTeX-OCR new CLI version instead of predict.py
+        # Make sure LaTeX-OCR is cloned in your project folder!
+        # This matches the structure you showed.
+        command = f"python LaTeX-OCR/cli.py --img {image_path} --config LaTeX-OCR/resources/config.yaml"
 
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
