@@ -1,16 +1,14 @@
 import streamlit as st
 from PIL import Image
 from io import BytesIO
-import subprocess
-import tempfile
-import os
 
 from docx import Document
+from pix2tex.cli import LatexOCR
 
 # ----------------------------
 # App title & instructions
 # ----------------------------
-st.title("🧮 Free Image-to-LaTeX Converter (New Version)")
+st.title("🧮 Free Image-to-LaTeX Converter (pix2tex)")
 st.write(
     "Upload an image of a math formula (PNG, JPG, JPEG, BMP, GIF, WEBP — "
     "any case) and get the recognized LaTeX code. "
@@ -34,44 +32,28 @@ if uploaded_file:
     if st.button("Convert to LaTeX"):
         st.info("⏳ Processing image... This may take 10–30 sec.")
 
-        # Save uploaded image to a temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-            image.save(tmp.name)
-            image_path = tmp.name
+        # ✅ Use pix2tex directly
+        model = LatexOCR()
+        latex_result = model(image)
 
-        # ✅ Run LaTeX-OCR new CLI version instead of predict.py
-        # Make sure LaTeX-OCR is cloned in your project folder!
-        # This matches the structure you showed.
-        command = f"python LaTeX-OCR/cli.py --img {image_path} --config LaTeX-OCR/resources/config.yaml"
+        st.success("✅ Recognized LaTeX:")
+        st.code(latex_result)
 
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        # Export to Word
+        doc = Document()
+        doc.add_paragraph("Recognized LaTeX formula:")
+        doc.add_paragraph(latex_result)
 
-        if result.returncode == 0:
-            latex_result = result.stdout.strip()
-            st.success("✅ Recognized LaTeX:")
-            st.code(latex_result)
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
 
-            # Export to Word
-            doc = Document()
-            doc.add_paragraph("Recognized LaTeX formula:")
-            doc.add_paragraph(latex_result)
-
-            buffer = BytesIO()
-            doc.save(buffer)
-            buffer.seek(0)
-
-            st.download_button(
-                label="📄 Download Word File",
-                data=buffer,
-                file_name="formula.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
-
-        else:
-            st.error("❌ Something went wrong. Error details:")
-            st.error(result.stderr)
-
-        os.unlink(image_path)  # Clean up temp file
+        st.download_button(
+            label="📄 Download Word File",
+            data=buffer,
+            file_name="formula.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
 
 else:
     st.info("ℹ️ Allowed file types: png, jpg, jpeg, bmp, gif, webp (case-insensitive)")
