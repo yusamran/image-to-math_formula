@@ -5,63 +5,55 @@ from PIL import Image
 from io import BytesIO
 from docx import Document
 
-# ✅ pix2tex & patch
-import pix2tex.model.checkpoints.get_latest_checkpoint as glc
-from pix2tex.cli import LatexOCR
-
-# ----------------------------
-# 🗂️ Model checkpoint config
-# ----------------------------
+# --- CONFIG: Use local torch_cache
 os.environ["TORCH_HOME"] = "./torch_cache"
 
+# --- Download weights if needed
 weights_url = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
 weights_path = "./torch_cache/hub/checkpoints/weights.pth"
 
-def download_weights(url, save_path):
-    with requests.get(url, stream=True) as r:
+if not os.path.exists(weights_path):
+    st.info("⬇️ Downloading weights (~50MB)...")
+    os.makedirs(os.path.dirname(weights_path), exist_ok=True)
+    with requests.get(weights_url, stream=True) as r:
         r.raise_for_status()
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        with open(save_path, 'wb') as f:
+        with open(weights_path, 'wb') as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
-
-if not os.path.exists(weights_path):
-    st.info("⬇️ Downloading model weights (~50MB)... This happens only once.")
-    download_weights(weights_url, weights_path)
     st.success("✅ Weights downloaded!")
 
-# ✅ Monkey-patch download_checkpoints to skip
+# --- Monkey-patch pix2tex to skip writing to site-packages
+import pix2tex.model.checkpoints.get_latest_checkpoint as glc
+
 def skip_download():
-    st.info("✅ Skipping internal download_checkpoints(). Using local weights.")
+    st.info("✅ Using local weights in torch_cache, skipping download_checkpoints().")
 glc.download_checkpoints = skip_download
 
+from pix2tex.cli import LatexOCR
+
 # ----------------------------
-# Streamlit UI
+# Streamlit App UI
 # ----------------------------
 st.title("🧮 Free Image-to-LaTeX Converter (pix2tex)")
-st.write(
-    "Upload an image of a math formula (PNG, JPG, JPEG, BMP, GIF, WEBP) "
-    "and get the recognized LaTeX code. You can also export it to a Word file!"
-)
 
 uploaded_file = st.file_uploader(
-    "Upload a formula image",
+    "Upload a formula image (PNG, JPG, JPEG, BMP, GIF, WEBP)",
     type=["png", "jpg", "jpeg", "bmp", "gif", "webp"]
 )
 
 if uploaded_file:
-    st.info("✅ Allowed file types: png, jpg, jpeg, bmp, gif, webp (case-insensitive)")
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
     if st.button("Convert to LaTeX"):
-        st.info("⏳ Processing image... This may take 10–30 sec.")
-        model = LatexOCR()  # ✅ Now safe: uses local weights
+        st.info("⏳ Processing image...")
+        model = LatexOCR()  # Uses local weights only!
         latex_result = model(image)
 
         st.success("✅ Recognized LaTeX:")
-        st.code(latex_result)
+        st.code(latex_result, language="latex")
 
+        # Export to Word
         doc = Document()
         doc.add_paragraph("Recognized LaTeX formula:")
         doc.add_paragraph(latex_result)
@@ -77,4 +69,4 @@ if uploaded_file:
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
 else:
-    st.info("ℹ️ Allowed file types: png, jpg, jpeg, bmp, gif, webp (case-insensitive)")
+    st.info("ℹ️ Allowed: png, jpg, jpeg, bmp, gif, webp")
