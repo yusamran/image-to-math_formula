@@ -8,7 +8,7 @@ from pix2tex.cli import LatexOCR
 # Tell torch to use a local, writable cache
 os.environ["TORCH_HOME"] = "./torch_cache"
 weights_path = "./torch_cache/hub/checkpoints/weights.pth"
-weights_url = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.1/weights.pth"
+weights_url = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
 
 # --- Download checkpoint if missing ---
 if not os.path.exists(weights_path):
