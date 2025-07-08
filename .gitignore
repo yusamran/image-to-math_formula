@@ -1,8 +1,10 @@
-# Ignore the local torch model cache
+# Local model weights (torch hub)
 torch_cache/
 
-# Ignore Python caches & virtual envs
+# Python cache
 __pycache__/
 *.pyc
+
+# Local virtual environment
 venv/
 env/
