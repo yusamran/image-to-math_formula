@@ -1,0 +1,8 @@
+# Ignore the local torch model cache
+torch_cache/
+
+# Ignore Python caches & virtual envs
+__pycache__/
+*.pyc
+venv/
+env/
