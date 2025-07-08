@@ -1,24 +1,49 @@
+import os
+import requests
 import streamlit as st
 from PIL import Image
 from io import BytesIO
-
 from docx import Document
+
+# ✅ pix2tex & patch
+import pix2tex.model.checkpoints.get_latest_checkpoint as glc
 from pix2tex.cli import LatexOCR
 
 # ----------------------------
-# App title & instructions
+# 🗂️ Model checkpoint config
+# ----------------------------
+os.environ["TORCH_HOME"] = "./torch_cache"
+
+weights_url = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
+weights_path = "./torch_cache/hub/checkpoints/weights.pth"
+
+def download_weights(url, save_path):
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+if not os.path.exists(weights_path):
+    st.info("⬇️ Downloading model weights (~50MB)... This happens only once.")
+    download_weights(weights_url, weights_path)
+    st.success("✅ Weights downloaded!")
+
+# ✅ Monkey-patch download_checkpoints to skip
+def skip_download():
+    st.info("✅ Skipping internal download_checkpoints(). Using local weights.")
+glc.download_checkpoints = skip_download
+
+# ----------------------------
+# Streamlit UI
 # ----------------------------
 st.title("🧮 Free Image-to-LaTeX Converter (pix2tex)")
 st.write(
-    "Upload an image of a math formula (PNG, JPG, JPEG, BMP, GIF, WEBP — "
-    "any case) and get the recognized LaTeX code. "
-    "You can also export it to a Word file!"
+    "Upload an image of a math formula (PNG, JPG, JPEG, BMP, GIF, WEBP) "
+    "and get the recognized LaTeX code. You can also export it to a Word file!"
 )
 
-# ----------------------------
-# ✅ File uploader (case-insensitive, no dot, no duplicates)
-# Streamlit normalizes extensions.
-# ----------------------------
 uploaded_file = st.file_uploader(
     "Upload a formula image",
     type=["png", "jpg", "jpeg", "bmp", "gif", "webp"]
@@ -31,15 +56,12 @@ if uploaded_file:
 
     if st.button("Convert to LaTeX"):
         st.info("⏳ Processing image... This may take 10–30 sec.")
-
-        # ✅ Use pix2tex directly
-        model = LatexOCR()
+        model = LatexOCR()  # ✅ Now safe: uses local weights
         latex_result = model(image)
 
         st.success("✅ Recognized LaTeX:")
         st.code(latex_result)
 
-        # Export to Word
         doc = Document()
         doc.add_paragraph("Recognized LaTeX formula:")
         doc.add_paragraph(latex_result)
@@ -54,6 +76,5 @@ if uploaded_file:
             file_name="formula.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
-
 else:
     st.info("ℹ️ Allowed file types: png, jpg, jpeg, bmp, gif, webp (case-insensitive)")
