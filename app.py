@@ -24,17 +24,24 @@ if not os.path.exists(weights_path):
                 f.write(chunk)
     st.success("✅ Weights downloaded!")
 
-# ✅ Monkey-patch download_checkpoints() so it won’t try to write to site-packages
+# ✅ Monkey-patch download_checkpoints so it won’t write to site-packages
 import pix2tex.model.checkpoints.get_latest_checkpoint as glc
 glc.download_checkpoints = lambda: None
 
-# ✅ Import LatexOCR and force local weights with args
-from pix2tex.cli import LatexOCR
+# ✅ Import LatexOCR, parser & force local weights
+from pix2tex.cli import LatexOCR, parser
+
+parser.set_defaults(checkpoint=weights_path)
 
 # ----------------------------
-# Streamlit App UI
+# ✅ Streamlit App UI
 # ----------------------------
 st.title("🧮 Free Image-to-LaTeX Converter (pix2tex)")
+st.write(
+    "Upload an image of a math formula (PNG, JPG, JPEG, BMP, GIF, WEBP) "
+    "and get the recognized LaTeX code. "
+    "You can also export it to a Word file!"
+)
 
 uploaded_file = st.file_uploader(
     "Upload a formula image",
@@ -47,7 +54,7 @@ if uploaded_file:
 
     if st.button("Convert to LaTeX"):
         st.info("⏳ Processing image...")
-        model = LatexOCR(args=["--checkpoint", weights_path])
+        model = LatexOCR()  # Uses forced checkpoint
         latex_result = model(image)
 
         st.success("✅ Recognized LaTeX:")
@@ -68,4 +75,4 @@ if uploaded_file:
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
 else:
-    st.info("ℹ️ Allowed: png, jpg, jpeg, bmp, gif, webp")
+    st.info("ℹ️ Allowed file types: png, jpg, jpeg, bmp, gif, webp")
