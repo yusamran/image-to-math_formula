@@ -5,14 +5,17 @@ from PIL import Image
 from io import BytesIO
 from docx import Document
 
-# --- CONFIG: Local cache
+# ----------------------------
+# ✅ Local torch cache config
+# ----------------------------
 os.environ["TORCH_HOME"] = "./torch_cache"
+
 weights_url = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
 weights_path = "./torch_cache/hub/checkpoints/weights.pth"
 
-# --- Download weights if needed
+# ✅ Download weights if missing
 if not os.path.exists(weights_path):
-    st.info("⬇️ Downloading weights...")
+    st.info("⬇️ Downloading model weights (~50MB)...")
     os.makedirs(os.path.dirname(weights_path), exist_ok=True)
     with requests.get(weights_url, stream=True) as r:
         r.raise_for_status()
@@ -21,18 +24,17 @@ if not os.path.exists(weights_path):
                 f.write(chunk)
     st.success("✅ Weights downloaded!")
 
-# --- Patch pix2tex to use local checkpoint
-import pix2tex.cli as cli
-cli.parser.set_defaults(checkpoint=weights_path)
-
-# --- Optional: skip forced download
+# ✅ Monkey-patch download_checkpoints() so it won’t try to write to site-packages
 import pix2tex.model.checkpoints.get_latest_checkpoint as glc
 glc.download_checkpoints = lambda: None
 
+# ✅ Import LatexOCR and force local weights with args
 from pix2tex.cli import LatexOCR
 
-# --- Streamlit UI
-st.title("🧮 Image to LaTeX Converter (pix2tex)")
+# ----------------------------
+# Streamlit App UI
+# ----------------------------
+st.title("🧮 Free Image-to-LaTeX Converter (pix2tex)")
 
 uploaded_file = st.file_uploader(
     "Upload a formula image",
@@ -45,7 +47,7 @@ if uploaded_file:
 
     if st.button("Convert to LaTeX"):
         st.info("⏳ Processing image...")
-        model = LatexOCR()
+        model = LatexOCR(args=["--checkpoint", weights_path])
         latex_result = model(image)
 
         st.success("✅ Recognized LaTeX:")
@@ -65,3 +67,5 @@ if uploaded_file:
             file_name="formula.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
+else:
+    st.
