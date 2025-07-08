@@ -1,6 +1,5 @@
 streamlit
-Pillow
-pix2tex
+pillow
 python-docx
-torch
-torchvision
+requests
+pix2tex
