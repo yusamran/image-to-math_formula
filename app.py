@@ -29,7 +29,7 @@ import pix2tex.model.checkpoints.get_latest_checkpoint as glc
 glc.download_checkpoints = lambda: None
 
 # ✅ Import LatexOCR & force local checkpoint path
-from pix2tex.cli import LatexOCR, parser
+from pix2tex.cli import LatexOCR
 parser.set_defaults(checkpoint=weights_path)
 
 # ----------------------------
