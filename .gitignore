@@ -1,5 +1,8 @@
+# .gitignore
 torch_cache/
 __pycache__/
 *.pyc
-venv/
+*.pyo
+*.pyd
 env/
+venv/
