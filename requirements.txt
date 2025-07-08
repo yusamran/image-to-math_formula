@@ -3,3 +3,4 @@ pillow
 python-docx
 requests
 pix2tex
+torch
