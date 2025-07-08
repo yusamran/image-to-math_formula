@@ -1,7 +1,8 @@
-# requirements.txt
 streamlit
+torch
+torchvision
+pix2tex
 pillow
 python-docx
+munch
 requests
-pix2tex
-torch
