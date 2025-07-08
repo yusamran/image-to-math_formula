@@ -10,12 +10,13 @@ from docx import Document
 # ----------------------------
 os.environ["TORCH_HOME"] = "./torch_cache"
 
-weights_url = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
+# ✅ USE YOUR HUGGING FACE LINK HERE!
+weights_url = "https://huggingface.co/yusamran/latex-ocr-weights/resolve/main/weights.pth"
 weights_path = "./torch_cache/hub/checkpoints/weights.pth"
 
 # ✅ Download weights if missing
 if not os.path.exists(weights_path):
-    st.info("⬇️ Downloading model weights (~50MB)...")
+    st.info("⬇️ Downloading model weights from Hugging Face (~50MB)...")
     os.makedirs(os.path.dirname(weights_path), exist_ok=True)
     with requests.get(weights_url, stream=True) as r:
         r.raise_for_status()
@@ -24,11 +25,12 @@ if not os.path.exists(weights_path):
                 f.write(chunk)
     st.success("✅ Weights downloaded!")
 
-# ✅ Monkey-patch download_checkpoints() so it won’t overwrite
+# ✅ Monkey-patch download_checkpoints() to prevent writing to site-packages
 import pix2tex.model.checkpoints.get_latest_checkpoint as glc
 glc.download_checkpoints = lambda: None
 
-from pix2tex.cli import LatexOCR, Munch
+# ✅ Import LatexOCR
+from pix2tex.cli import LatexOCR
 
 # ----------------------------
 # Streamlit App UI
@@ -46,20 +48,17 @@ if uploaded_file:
 
     if st.button("Convert to LaTeX"):
         st.info("⏳ Processing image...")
-
-        arguments = Munch({
-            'config': './settings/config.yaml',
-            'checkpoint': weights_path,
-            'no_cuda': True,
-            'no_resize': False
-        })
-
-        model = LatexOCR(arguments)
+        model = LatexOCR(arguments=None)
+        model.args.checkpoint = weights_path  # Force local weights
+        model.model.load_state_dict(
+            torch.load(weights_path, map_location=model.args.device)
+        )
         latex_result = model(image)
 
         st.success("✅ Recognized LaTeX:")
         st.code(latex_result, language="latex")
 
+        # Export to Word
         doc = Document()
         doc.add_paragraph("Recognized LaTeX formula:")
         doc.add_paragraph(latex_result)
