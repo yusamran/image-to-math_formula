@@ -2,15 +2,12 @@ import os
 import requests
 import streamlit as st
 from PIL import Image
-from pix2tex.model.checkpoints.get_latest_checkpoint import get_checkpoint
-from pix2tex.cli import LatexOCR
 
 # --- CONFIG ---
 os.environ["TORCH_HOME"] = "./torch_cache"
 weights_url = "https://github.com/lukas-blecher/LaTeX-OCR/releases/download/v0.0.1/weights.pth"
 weights_path = "./torch_cache/hub/checkpoints/weights.pth"
 
-# --- Download weights if needed ---
 def download_weights(url, save_path):
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
@@ -24,10 +21,11 @@ if not os.path.exists(weights_path):
     download_weights(weights_url, weights_path)
     st.success("✅ Weights downloaded!")
 
-# --- Load checkpoint manually ---
-checkpoint = get_checkpoint(weights_path)
-model = LatexOCR(checkpoint=checkpoint)
+from pix2tex.cli import LatexOCR
 
+# Just call it normally — it will see your TORCH_HOME
+st.info("Loading model...")
+model = LatexOCR()
 st.success("✅ Model loaded!")
 
 # --- Streamlit UI ---
